@@ -185,9 +185,106 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 0.9em;
         }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #ff6b35;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 107, 53, 0.3);
+        }
+
+        .modal-content h2 {
+            color: #ff6b35;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #ff6b35;
+        }
+
+        .modal-content p {
+            font-size: 1.2em;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            color: #ddd;
+        }
+
+        .modal-content button {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            background: #ff6b35;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-content button:hover {
+            background: #ff8c5a;
+            transform: scale(1.05);
+        }
+
+        .story-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+            background: rgba(255, 107, 53, 0.2);
+            border: 2px solid #ff6b35;
+            border-radius: 10px;
+            padding: 10px 15px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        .story-btn:hover {
+            background: rgba(255, 107, 53, 0.4);
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
+    <!-- Начальная свечка (Intro) -->
+    <div id="intro-modal" class="modal-overlay active">
+        <div class="modal-content">
+            <h2>🕯️ Начальная Свеча</h2>
+            <p>В мире, где солнце погасло тысячелетия назад, только свечи держат тьму. Ты — последний Свечебот, рождённый из угасшей звезды. Твоя миссия: зажечь Вечную Свечу, чтобы мир снова увидел рассвет.</p>
+            <button onclick="closeIntro()">Начать историю</button>
+        </div>
+    </div>
+
+    <!-- Конечная свечка (Goal) -->
+    <div id="goal-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>📖 Конечная Свеча</h2>
+            <p>Цель: Накопи 15 вечных свечей и зажги Вечную Свечу. Мир будет спасён.</p>
+            <button onclick="closeGoal()">Понятно</button>
+        </div>
+    </div>
+
+    <!-- Кнопка цели в игре -->
+    <button class="story-btn" id="story-btn" onclick="openGoal()" style="display: none;">📖</button>
+
     <!-- Экран входа -->
     <div id="login-screen">
         <h1>🕯️ Свечебот</h1>
@@ -357,6 +454,9 @@
         function showGame() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
+            
+            // Показать кнопку истории
+            showStoryButton();
             
             // Инициализация canvas
             state.canvas = document.getElementById('game-canvas');
@@ -610,6 +710,24 @@
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
+        }
+
+        // Функции модальных окон
+        function closeIntro() {
+            document.getElementById('intro-modal').classList.remove('active');
+        }
+
+        function openGoal() {
+            document.getElementById('goal-modal').classList.add('active');
+        }
+
+        function closeGoal() {
+            document.getElementById('goal-modal').classList.remove('active');
+        }
+
+        // Показать кнопку истории в игре
+        function showStoryButton() {
+            document.getElementById('story-btn').style.display = 'block';
         }
 
         // Запуск при загрузке страницы
