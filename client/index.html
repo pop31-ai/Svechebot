@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Свечебот — Мультиплеерная Игра с Роботами</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+        }
+        
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            gap: 20px;
+        }
+        
+        #login-screen h1 {
+            font-size: 3em;
+            color: #ff6b35;
+            text-shadow: 0 0 20px #ff6b35;
+        }
+        
+        #login-screen input {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: 2px solid #ff6b35;
+            border-radius: 10px;
+            background: rgba(255, 107, 53, 0.1);
+            color: #fff;
+            outline: none;
+        }
+        
+        #login-screen button {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            background: #ff6b35;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #login-screen button:hover {
+            background: #ff8c5a;
+            transform: scale(1.05);
+        }
+        
+        #game-container {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+        }
+        
+        #game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        #time-display {
+            font-size: 1.5em;
+            color: #4ecdc4;
+        }
+        
+        #player-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .info-box {
+            padding: 10px 20px;
+            background: rgba(78, 205, 196, 0.2);
+            border-radius: 8px;
+            border: 1px solid #4ecdc4;
+        }
+        
+        #game-canvas {
+            width: 100%;
+            height: 500px;
+            background: #0f0f23;
+            border-radius: 10px;
+            border: 2px solid #4ecdc4;
+        }
+        
+        #controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .control-btn {
+            padding: 20px;
+            font-size: 1.1em;
+            border: 2px solid #4ecdc4;
+            border-radius: 10px;
+            background: rgba(78, 205, 196, 0.1);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover:not(:disabled) {
+            background: rgba(78, 205, 196, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .control-btn .count {
+            display: block;
+            font-size: 0.8em;
+            color: #4ecdc4;
+            margin-top: 5px;
+        }
+        
+        #permissions {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 107, 53, 0.1);
+            border-radius: 10px;
+            border: 1px solid #ff6b35;
+        }
+        
+        #permissions h3 {
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+        
+        .perm-level {
+            display: inline-block;
+            padding: 5px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        
+        .perm-active {
+            background: #4ecdc4;
+            color: #000;
+        }
+        
+        .perm-inactive {
+            background: rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+        
+        #log {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Экран входа -->
+    <div id="login-screen">
+        <h1>🕯️ Свечебот</h1>
+        <p>Мультиплеерная игра с роботами</p>
+        <input type="text" id="player-id" placeholder="Введите ID игрока">
+        <input type="text" id="player-name" placeholder="Имя робота (опционально)">
+        <button onclick="joinGame()">Войти в игру</button>
+    </div>
+    
+    <!-- Игровой контейнер -->
+    <div id="game-container">
+        <div id="game-header">
+            <div id="time-display">☀️ День 1</div>
+            <div id="player-info">
+                <div class="info-box">Уровень: <span id="level">1</span></div>
+                <div class="info-box">Опыт: <span id="experience">0</span></div>
+                <div class="info-box">Накопления: <span id="accumulated">0</span></div>
+                <div class="info-box">🕯️ <span id="candles">0</span></div>
+            </div>
+        </div>
+        
+        <canvas id="game-canvas"></canvas>
+        
+        <div id="controls">
+            <button class="control-btn" id="btn-move" onclick="performAction('move')">
+                Движение
+                <span class="count" id="count-movement">0</span>
+            </button>
+            <button class="control-btn" id="btn-attack" onclick="performAction('attack')">
+                Атака
+                <span class="count" id="count-attack">0</span>
+            </button>
+            <button class="control-btn" id="btn-collect" onclick="performAction('collect')">
+                Сбор ресурсов
+                <span class="count" id="count-resource">0</span>
+            </button>
+            <button class="control-btn" id="btn-unlock" onclick="performAction('unlock')">
+                Разблокировка
+                <span class="count" id="count-permission">0</span>
+            </button>
+        </div>
+        
+        <div id="permissions">
+            <h3>Уровни доступа:</h3>
+            <span class="perm-level perm-active" id="perm-basic">Базовый</span>
+            <span class="perm-level perm-inactive" id="perm-advanced">Продвинутый</span>
+            <span class="perm-level perm-inactive" id="perm-elite">Элитный</span>
+        </div>
+        
+        <div id="log">
+            <div class="log-entry">Добро пожаловать в Свечебот!</div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * @fileoverview Клиентская часть игры Свечебот
+         * 
+         * @description
+         * Управляет отображением, вводом и синхронизацией с сервером.
+         * Рендерит 2D мир с роботами-свечечниками.
+         * 
+         * @see CONCEPT.md - Полная документация по игре
+         */
+
+        // Состояние клиента
+        const state = {
+            playerId: null,
+            playerName: null,
+            ws: null,
+            player: null,
+            time: { isDay: true, dayNumber: 1, remaining: 0 },
+            canvas: null,
+            ctx: null,
+            robots: [],
+            myRobot: null
+        };
+
+        /**
+         * Присоединение к игре
+         * @description
+         * Устанавливает WebSocket соединение и отправляет
+         * данные для входа в игру
+         */
+        function joinGame() {
+            const idInput = document.getElementById('player-id');
+            const nameInput = document.getElementById('player-name');
+            
+            const playerId = idInput.value.trim();
+            const playerName = nameInput.value.trim();
+            
+            if (!playerId) {
+                alert('Введите ID игрока!');
+                return;
+            }
+            
+            state.playerId = playerId;
+            state.playerName = playerName || `Робот-${playerId.slice(-4)}`;
+            
+            // Подключение к WebSocket серверу
+            state.ws = new WebSocket(`ws://${window.location.hostname}:3000`);
+            
+            state.ws.onopen = () => {
+                console.log('Подключено к серверу');
+                state.ws.send(JSON.stringify({
+                    type: 'join',
+                    id: state.playerId,
+                    name: state.playerName
+                }));
+            };
+            
+            state.ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                handleServerMessage(message);
+            };
+            
+            state.ws.onclose = () => {
+                console.log('Отключено от сервера');
+            };
+        }
+
+        /**
+         * Обработка сообщений от сервера
+         * @description
+         * Маршрутизирует входящие сообщения по типам:
+         * - joined: успешное подключение
+         * - timeUpdate: обновление времени
+         * - actionResult: результат действия
+         * - playerUpdate: обновление данных игрока
+         * 
+         * @param {Object} message - Сообщение от сервера
+         */
+        function handleServerMessage(message) {
+            switch (message.type) {
+                case 'joined':
+                    state.player = message.data;
+                    showGame();
+                    addLog(`Вы вошли как ${state.player.name}`);
+                    requestTimeSync();
+                    break;
+                    
+                case 'timeUpdate':
+                case 'timeSync':
+                    state.time = message.data;
+                    updateTimeDisplay();
+                    break;
+                    
+                case 'actionResult':
+                    if (message.data.success) {
+                        addLog(`Действие выполнено успешно`);
+                    } else {
+                        addLog(`Ошибка: ${message.data.error}`);
+                    }
+                    break;
+                    
+                case 'playerUpdate':
+                    state.player = message.data;
+                    updatePlayerInfo();
+                    updateControls();
+                    break;
+            }
+        }
+
+        /**
+         * Показать игровой интерфейс
+         */
+        function showGame() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            
+            // Инициализация canvas
+            state.canvas = document.getElementById('game-canvas');
+            state.ctx = state.canvas.getContext('2d');
+            state.canvas.width = state.canvas.offsetWidth;
+            state.canvas.height = state.canvas.offsetHeight;
+            
+            updatePlayerInfo();
+            updateControls();
+            startGameLoop();
+        }
+
+        /**
+         * Запрос синхронизации времени
+         * @description
+         * Запрашивает текущее время сервера каждые 30 секунд
+         */
+        function requestTimeSync() {
+            setInterval(() => {
+                if (state.ws && state.ws.readyState === 1) {
+                    state.ws.send(JSON.stringify({ type: 'sync' }));
+                }
+            }, 30000);
+        }
+
+        /**
+         * Обновление отображения времени
+         * @description
+         * Показывает текущее время (день/ночь) и номер дня
+         */
+        function updateTimeDisplay() {
+            const display = document.getElementById('time-display');
+            const icon = state.time.isDay ? '☀️' : '🌙';
+            display.textContent = `${icon} ${state.time.isDay ? 'День' : 'Ночь'} ${state.time.dayNumber}`;
+        }
+
+        /**
+         * Обновление информации об игроке
+         * @description
+         * Обновляет отображение уровня, опыта, накоплений и свечек
+         */
+        function updatePlayerInfo() {
+            if (!state.player) return;
+            
+            document.getElementById('level').textContent = state.player.level;
+            document.getElementById('experience').textContent = state.player.experience;
+            document.getElementById('accumulated').textContent = state.player.accumulated;
+            document.getElementById('candles').textContent = state.player.candles.lit + state.player.candles.eternal;
+            
+            // Обновление разрешений
+            document.getElementById('perm-basic').className = 
+                `perm-level ${state.player.permissions.basic ? 'perm-active' : 'perm-inactive'}`;
+            document.getElementById('perm-advanced').className = 
+                `perm-level ${state.player.permissions.advanced ? 'perm-active' : 'perm-inactive'}`;
+            document.getElementById('perm-elite').className = 
+                `perm-level ${state.player.permissions.elite ? 'perm-active' : 'perm-inactive'}`;
+        }
+
+        /**
+         * Обновление кнопок управления
+         * @description
+         * Показывает количество доступных карт для каждого действия
+         */
+        function updateControls() {
+            if (!state.player) return;
+            
+            document.getElementById('count-movement').textContent = `x${state.player.cards.movement}`;
+            document.getElementById('count-attack').textContent = `x${state.player.cards.attack}`;
+            document.getElementById('count-resource').textContent = `x${state.player.cards.resource}`;
+            document.getElementById('count-permission').textContent = `x${state.player.cards.permission}`;
+            
+            // Блокировка кнопок при отсутствии карт
+            document.getElementById('btn-move').disabled = state.player.cards.movement <= 0;
+            document.getElementById('btn-attack').disabled = state.player.cards.attack <= 0;
+            document.getElementById('btn-collect').disabled = state.player.cards.resource <= 0;
+            document.getElementById('btn-unlock').disabled = state.player.cards.permission <= 0;
+        }
+
+        /**
+         * Выполнение действия
+         * @description
+         * Отправляет действие на сервер для обработки
+         * 
+         * @param {string} type - Тип действия (move, attack, collect, unlock)
+         */
+        function performAction(type) {
+            if (!state.ws || state.ws.readyState !== 1) return;
+            
+            let action = { type };
+            
+            if (type === 'move') {
+                // Случайное перемещение для простоты
+                action.target = {
+                    x: Math.floor(Math.random() * 100),
+                    y: Math.floor(Math.random() * 100)
+                };
+            }
+            
+            state.ws.send(JSON.stringify({
+                type: 'action',
+                action: action
+            }));
+        }
+
+        /**
+         * Добавление записи в лог
+         * @param {string} message - Текст сообщения
+         */
+        function addLog(message) {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            log.insertBefore(entry, log.firstChild);
+        }
+
+        /**
+         * Основной игровой цикл
+         * @description
+         * Запускает бесконечный цикл рендеринга
+         */
+        function startGameLoop() {
+            function loop() {
+                render();
+                requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        /**
+         * Рендеринг игрового мира
+         * @description
+         * Отрисовывает:
+         * - Фон (день/ночь)
+         * - Роботов
+         * - Свечки
+         * - Эффекты
+         */
+        function render() {
+            const ctx = state.ctx;
+            const width = state.canvas.width;
+            const height = state.canvas.height;
+            
+            // Очистка canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Фон (день/ночь)
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            if (state.time.isDay) {
+                gradient.addColorStop(0, '#87CEEB');
+                gradient.addColorStop(1, '#E0F6FF');
+            } else {
+                gradient.addColorStop(0, '#0f0f23');
+                gradient.addColorStop(1, '#1a1a3e');
+            }
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Звёзды ночью
+            if (!state.time.isDay) {
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 50; i++) {
+                    const x = (i * 137.5) % width;
+                    const y = (i * 97.3) % (height * 0.6);
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // Рисуем робота игрока
+            if (state.player) {
+                drawRobot(ctx, state.player.position.x * width / 100, 
+                         height - 100, state.time.isDay);
+            }
+            
+            // Рисуем свечки
+            for (let i = 0; i < 5; i++) {
+                drawCandle(ctx, 100 + i * 150, height - 50, state.time.isDay);
+            }
+        }
+
+        /**
+         * Отрисовка робота
+         * @param {CanvasRenderingContext2D} ctx - Контекст canvas
+         * @param {number} x - Координата X
+         * @param {number} y - Координата Y
+         * @param {boolean} isDay - День или ночь
+         */
+        function drawRobot(ctx, x, y, isDay) {
+            // Тело робота
+            ctx.fillStyle = isDay ? '#4ecdc4' : '#ff6b35';
+            ctx.fillRect(x - 25, y - 50, 50, 60);
+            
+            // Голова
+            ctx.fillStyle = isDay ? '#ff6b35' : '#4ecdc4';
+            ctx.beginPath();
+            ctx.arc(x, y - 65, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Глаза
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(x - 8, y - 68, 5, 0, Math.PI * 2);
+            ctx.arc(x + 8, y - 68, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Огонёк на голове (свеча)
+            if (isDay) {
+                ctx.fillStyle = '#ff0';
+                ctx.beginPath();
+                ctx.moveTo(x, y - 90);
+                ctx.lineTo(x - 5, y - 80);
+                ctx.lineTo(x + 5, y - 80);
+                ctx.fill();
+            }
+        }
+
+        /**
+         * Отрисовка свечки
+         * @param {CanvasRenderingContext2D} ctx - Контекст canvas
+         * @param {number} x - Координата X
+         * @param {number} y - Координата Y
+         * @param {boolean} isDay - День или ночь
+         */
+        function drawCandle(ctx, x, y, isDay) {
+            // Основание свечи
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(x - 5, y - 30, 10, 30);
+            
+            // Фитиль
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, y - 30);
+            ctx.lineTo(x, y - 40);
+            ctx.stroke();
+            
+            // Пламя
+            if (isDay) {
+                ctx.fillStyle = '#ff0';
+                ctx.beginPath();
+                ctx.moveTo(x, y - 55);
+                ctx.quadraticCurveTo(x - 8, y - 40, x, y - 35);
+                ctx.quadraticCurveTo(x + 8, y - 40, x, y - 55);
+                ctx.fill();
+                
+                // Свечение
+                ctx.shadowColor = '#ff0';
+                ctx.shadowBlur = 20;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Запуск при загрузке страницы
+        window.onload = () => {
+            console.log('Свечебот загружен');
+        };
+    </script>
+</body>
+</html>
