@@ -1,0 +1,12 @@
+{
+  "name": "Тестовый раннер Свечебот",
+  "version": "1.0.0",
+  "description": "Автотесты для Свечебот (PORT 3000)",
+  "main": "runner.js",
+  "scripts": {
+    "test": "node runner.js"
+  },
+  "dependencies": {
+    "ws": "^8.0.0"
+  }
+}

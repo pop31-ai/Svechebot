@@ -1,0 +1,75 @@
+[
+  {
+    "name": "1. Вход и начальное состояние",
+    "userId": "test-svech-001",
+    "callsign": "Тест-Свеча",
+    "steps": [
+      { "action": "checkPlayer", "expect": { "level": 1, "experience": 0 } },
+      { "action": "checkPlayer", "expect": { "candles": { "lit": 0, "eternal": 0 } } },
+      { "action": "checkPlayer", "expect": { "dayActions": 0, "accumulated": 0 } }
+    ]
+  },
+  {
+    "name": "2. Движение:消耗 movement card",
+    "userId": "test-svech-002",
+    "callsign": "Тест-Движ",
+    "steps": [
+      { "action": "doAction", "actionType": { "type": "move", "target": { "x": 42, "y": 42 } }, "expect": { "success": true, "dayActions": 1 } },
+      { "action": "checkPlayer", "expect": { "position": { "x": 42, "y": 42 }, "dayActions": 1 } }
+    ]
+  },
+  {
+    "name": "3. Атака:消耗 attack card, +2 dayActions",
+    "userId": "test-svech-003",
+    "callsign": "Тест-Атака",
+    "steps": [
+      { "action": "doAction", "actionType": { "type": "attack" }, "expect": { "success": true, "dayActions": 2 } },
+      { "action": "checkPlayer", "expect": { "dayActions": 2 } }
+    ]
+  },
+  {
+    "name": "4. Сбор ресурса:消耗 resource card",
+    "userId": "test-svech-004",
+    "callsign": "Тест-Ресурс",
+    "steps": [
+      { "action": "doAction", "actionType": { "type": "collect" }, "expect": { "success": true, "dayActions": 1, "inventory": ["resource"] } },
+      { "action": "checkPlayer", "expect": { "dayActions": 1, "inventory": ["resource"] } }
+    ]
+  },
+  {
+    "name": "5. Разблокировка: результат зависит от permission card",
+    "userId": "test-svech-unlock",
+    "callsign": "Тест-Вечность",
+    "steps": [
+      { "action": "doAction", "actionType": { "type": "unlock" } }
+    ]
+  },
+  {
+    "name": "6. Детерминированность: тот же ID → те же карты",
+    "userId": "test-svech-determ",
+    "callsign": "Детерминер",
+    "steps": [
+      { "action": "checkPlayer", "expect": { "level": 1 } }
+    ]
+  },
+  {
+    "name": "7. sync отвечает",
+    "userId": "test-svech-sync",
+    "callsign": "Тест-Синк",
+    "steps": [
+      { "action": "sync" }
+    ]
+  },
+  {
+    "name": "8. Исчерпание карт: атака до ошибки",
+    "userId": "test-svech-deplete",
+    "callsign": "Тест-Ноль",
+    "steps": [
+      { "action": "doAction", "actionType": { "type": "attack" }, "expect": { "success": true } },
+      { "action": "doAction", "actionType": { "type": "attack" } },
+      { "action": "doAction", "actionType": { "type": "attack" } },
+      { "action": "doAction", "actionType": { "type": "attack" } },
+      { "action": "doAction", "actionType": { "type": "attack" }, "expect": { "error": "Нет карт атаки" } }
+    ]
+  }
+]
